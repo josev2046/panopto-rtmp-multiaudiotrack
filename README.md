@@ -44,6 +44,12 @@ To prevent the full page refresh standard in browser behaviour, the wrapper empl
 * **Outcome:** Two distinct, parallel broadcasts are active within the Panopto cloud environment.
 
 ### 2. Viewer Journey (Consumption)
+
+
+
+https://github.com/user-attachments/assets/a06daff0-dc8f-4081-aa22-b9bf7ecdec2a
+
+
 * The viewer navigates to the custom event URL.
 * The page initialises; JavaScript injects the Session ID for the default language (English).
 * The viewer selects "Spanish" via the dropdown menu.
