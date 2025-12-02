@@ -1,5 +1,7 @@
 # Panopto Multi-Language Live Streaming Solution
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17788084.svg)](https://doi.org/10.5281/zenodo.17788084)
+
 This repository documents a client-side stream switching solution designed to support multiple simultaneous audio tracks (languages) for a single high-profile event.
 
 As Panopto’s native architecture supports a single audio track per video stream, this solution wraps standard RTMP ingestion in a customised HTML interface. This centralises multiple language streams into a single URL, facilitating dynamic player switching without disrupting the viewer experience via page reloads.
