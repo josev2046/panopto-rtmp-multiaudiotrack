@@ -1,40 +1,37 @@
 # Panopto Multi-Language Live Streaming Solution
 
-This repository documents a Client-Side Stream Switching solution designed to support multiple simultaneous audio tracks (languages) for a single high-profile event.
+This repository documents a client-side stream switching solution designed to support multiple simultaneous audio tracks (languages) for a single high-profile event.
 
-Current Panopto native webcasting architecture supports a single audio track per video stream. To circumvent this limitation, this solution utilises standard RTMP ingestion whilst wrapping the viewer experience in a customised HTML interface. This requires centralising multiple language streams into a single URL to facilitate dynamic player switching without requiring page reloads.
+As Panopto’s native architecture supports a single audio track per video stream, this solution wraps standard RTMP ingestion in a customised HTML interface. This centralises multiple language streams into a single URL, facilitating dynamic player switching without disrupting the viewer experience via page reloads.
 
 ## Architecture Overview
 
-This solution bridges the gap between Panopto's standard delivery mechanisms and the client's multi-track requirement via a lightweight web wrapper. 
+This solution bridges standard Panopto delivery with multi-track requirements via a lightweight web wrapper.
 
-<img width="627" height="824" alt="image" src="https://github.com/user-attachments/assets/7a25b33e-67b3-4364-93ff-e96dcfb72fe4" />
+<img width="627" height="824" alt="Architecture Diagram" src="https://github.com/user-attachments/assets/7a25b33e-67b3-4364-93ff-e96dcfb72fe4" />
 
+The architecture comprises three core components:
 
-
-It consists of three core components:
-
-### Part 1: Ingest and Session Provisioning
-Panopto natively supports unlimited concurrent webcasts.
+### 1. Ingest and Session Provisioning
+Panopto natively supports unlimited concurrent webcasts. This solution leverages that capability as follows:
 
 * **Provisioning:** Distinct "Webcast" sessions are created for each language (e.g., `Event_EN`, `Event_ES`).
-* **Routing:** Specific RTMP URLs and Stream Keys are generated for each session.
-* **Synchronisation:** Synchronisation relies on the encoders starting simultaneously. Slight variances in latency (milliseconds) are expected but are negligible for this use case.
+* **Routing:** Unique RTMP URLs and Stream Keys are generated for each session.
+* **Synchronisation:** Alignment relies on simultaneous encoder start times. Minor latency variances (milliseconds) are expected but negligible for this use case.
 
-### Part 2: The Custom Player Wrapper
-Panopto provides an Embed API and standard iframe code (`Embed.aspx`).
-The native player interface lacks a control mechanism to switch between Session IDs dynamically.
+### 2. The Custom Player Wrapper
+While Panopto provides an Embed API, the native interface lacks dynamic session switching. To address this:
 
-* Deployment of a standalone HTML page hosting a Mapping Object (Language Name to Panopto Session GUID).
-* Implementation of a simplified dropdown UI for language selection.
-* Targeting of a single iframe element (`id="panopto-player-frame"`) to load the default language upon page initialisation.
+* **Hosting:** A standalone HTML page hosts a Mapping Object (Language Name to Panopto Session GUID).
+* **Interface:** A simplified dropdown UI facilitates language selection.
+* **Initialisation:** The page targets a single iframe (`id="panopto-player-frame"`) to load the default language immediately.
 
-### Part 3: Stream Switching Logic
-Standard browser behaviour triggers a full page refresh when changing sources, disrupting the viewing experience. The player hot-swaps the Session ID and enforces autoplay to minimize interruption.
+### 3. Stream Switching Logic
+To prevent the full page refresh standard in browser behaviour, the wrapper employs the following logic:
 
-* **Hot Swapping:** JavaScript logic intercepts the dropdown change event to retrieve the corresponding Session ID.
+* **Hot Swapping:** JavaScript intercepts the dropdown change event to retrieve the corresponding Session ID.
 * **URL Construction:** The script dynamically constructs the new source URL: `https://{site}/Panopto/Pages/Embed.aspx?id={New_GUID}&autoplay=true`.
-* **Autoplay Enforcement:** The `autoplay=true` parameter is appended to ensure playback resumes immediately after the swap.
+* **Autoplay Enforcement:** The `autoplay=true` parameter is appended to ensure playback resumes immediately.
 
 ## User Journeys
 
