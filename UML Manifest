@@ -1,0 +1,34 @@
+@startuml
+!include <C4/C4_Container>
+
+' Forces the layout to be vertical
+LAYOUT_TOP_DOWN()
+
+System_Boundary(c1, "Live Streaming Environment") {
+    System(encoder1, "Encoder 1", "French Audio", "Encoder")
+    System(encoder2, "Encoder 2", "Spanish Audio", "Encoder")
+   
+    System(panopto_platform, "Panopto Cloud", "Ingests RTMP & Delivers Webcast")
+   
+    ' Push flow downwards
+    Rel_Down(encoder1, panopto_platform, "RTMP Stream")
+    Rel_Down(encoder2, panopto_platform, "RTMP Stream")
+}
+
+System_Boundary(c2, "Web Page") {
+    System(web_server, "Web Server", "Hosts HTML, JS & Session GUIDs")
+   
+    System(panopto_player, "Panopto Iframe", "Embed.aspx Wrapper")
+   
+    ' Logical connection within the boundary
+    Rel_Right(web_server, panopto_player, "Updates 'src' via JS")
+}
+
+Person_Ext(viewer, "Viewer", "Watches Live Event")
+
+' Connect the major blocks vertically
+Rel_Down(panopto_platform, panopto_player, "Delivers HLS Stream")
+Rel_Up(viewer, panopto_player, "Selects Language", "UI Interaction")
+
+
+@enduml
