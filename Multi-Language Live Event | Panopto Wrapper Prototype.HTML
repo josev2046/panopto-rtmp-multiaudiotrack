@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Language Live Event | Panopto Wrapper Prototype</title>
+    <style>
+        /* Main Layout & Player Wrapper Styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px; /* Limits width on large screens */
+            background-color: #2c2c2c;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #464646;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.2rem; }
+        
+        .status-indicator {
+            font-size: 0.8rem;
+            color: #ff4444;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* * Responsive Video Container 
+         * Uses padding-bottom hack to enforce 16:9 Aspect Ratio 
+         * regardless of screen width.
+         */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; 
+            background-color: #000;
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Controls & Dropdown Styling */
+        .controls {
+            padding: 20px;
+            background-color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        label { font-weight: bold; color: #ccc; }
+
+        select {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .description {
+            padding: 25px;
+            font-size: 0.95rem;
+            color: #cccccc;
+            line-height: 1.6;
+        }
+        
+        .tech-note {
+            font-size: 0.85rem; 
+            color: #888; 
+            margin-top: 15px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Executive Town Hall 2025</h1>
+            <span class="status-indicator">● Live</span>
+        </div>
+
+        <div class="video-wrapper">
+            <iframe 
+                id="panopto-player-frame" 
+                src="" 
+                allowfullscreen 
+                allow="autoplay">
+            </iframe>
+        </div>
+
+        <div class="controls">
+            <label for="language-select">Audio Language:</label>
+            <select id="language-select">
+                <option value="french">French (Recurrent)</option>
+                <option value="spanish">Spanish (Recurrent)</option>
+            </select>
+        </div>
+
+        <div class="description">
+            <p>
+                This repository demonstrates a multi-language live streaming solution using Panopto. 
+                Separate encoders send language-specific streams to Panopto, and a web page dynamically 
+                switches between them based on user selection.
+            </p>
+            <p class="tech-note">
+                <strong>System Note:</strong> Selecting a different language above triggers the client-side switching logic. 
+                The player hot-swaps the Session ID and enforces autoplay to minimize interruption.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration: Stream Mapping ---
+        // Maps the dropdown values to specific Panopto Session IDs (GUIDs).
+        const streamMap = {
+            "french": "ccc00376-d6bc-4982-a2d6-b3a60113fe84", 
+            "spanish": "d3276d9a-f209-41dc-a6d5-b3a60114401c" 
+        };
+
+        // Base Configuration for the Panopto Embed API
+        const baseURL = "https://velazquez.cloud.panopto.eu/Panopto/Pages/Embed.aspx";
+        
+        // Default URL parameters to clean up the player UI (remove branding, title, etc.)
+        const baseParams = "&offerviewer=true&showtitle=true&showbrand=false&captions=false&interactivity=all";
+
+        // DOM Element References
+        const playerFrame = document.getElementById('panopto-player-frame');
+        const selector = document.getElementById('language-select');
+
+        // --- Core Logic: Stream Switching ---
+
+        /**
+         * Constructs the full Panopto Embed URL.
+         * Appends 'autoplay=true' to ensure playback resumes immediately 
+         * after a language switch, preventing the user from needing to press play again.
+         */
+        function getStreamURL(languageKey) {
+            const guid = streamMap[languageKey];
+            return `${baseURL}?id=${guid}&autoplay=true${baseParams}`;
+        }
+
+        // Initialization:
+        // Sets the iframe source to the default selected value (first option) on load.
+        window.addEventListener('DOMContentLoaded', () => {
+            const defaultLang = selector.value;
+            playerFrame.src = getStreamURL(defaultLang);
+            console.log("System Ready. Loaded default stream: " + defaultLang);
+        });
+
+        // Event Listener:
+        // Detects when the user changes the dropdown selection and updates the iframe src.
+        selector.addEventListener('change', (event) => {
+            const selectedLang = event.target.value;
+            
+            console.log("Hot-swapping to: " + selectedLang);
+            
+            // This triggers the browser to load the new URL in the existing iframe
+            playerFrame.src = getStreamURL(selectedLang);
+        });
+
+    </script>
+</body>
+</html>
