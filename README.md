@@ -49,3 +49,35 @@ To prevent the full page refresh standard in browser behaviour, the wrapper empl
 * The viewer selects "Spanish" via the dropdown menu.
 * The script updates the iframe `src` attribute.
 * **Outcome:** The player buffers briefly (approximately 1-2 seconds) and resumes playback with the Spanish audio track.
+
+## Future Enhancements: Locale-Based Stream Initialisation
+
+At present, the player wrapper defaults to a static primary language (e.g., English) upon loading. A proposed enhancement involves implementing logic to automatically detect the viewer's locale, reducing the need for manual selection by the end-user.
+
+This feature would function by querying the browser's `navigator.language` property to ascertain the user's preferred system language. The script would then parse this string to identify the primary language ISO code (for instance, truncating `es-MX` to `es`).
+
+This code is subsequently cross-referenced against the internal `streamMap` object:
+
+* **Match Found:** If the detected locale corresponds to an available stream, that specific Panopto Session ID is injected into the iframe source immediately.
+* **No Match (Fallback):** If the locale is unsupported, the system reverts to the standard default language to ensure the broadcast remains accessible.
+
+
+To deploy this functionality, the static initialisation script within the HTML wrapper would be augmented with conditional logic:
+
+```javascript
+// 1. Define the default fallback (e.g., English)
+const defaultLang = 'en';
+
+// 2. Detect and normalize browser language (e.g., 'es-MX' becomes 'es')
+const userLocale = (navigator.language || navigator.userLanguage).split('-')[0].toLowerCase();
+
+// 3. Determine the startup ID
+// If the detected language exists in our map, use it. Otherwise, use default.
+const initialId = streamMap.hasOwnProperty(userLocale) 
+    ? streamMap[userLocale] 
+    : streamMap[defaultLang];
+
+// 4. Initialize Player
+document.getElementById('panopto-player-frame').src = 
+    `https://{site}/Panopto/Pages/Embed.aspx?id=${initialId}&autoplay=true`;
+```
