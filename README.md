@@ -93,7 +93,7 @@ For automated workflows, the configuration moves from physical appliances to clo
 
 ### 2. Viewer journey (consumption)
 
-![Viewer Interface Interaction](https://github.com/user-attachments/assets/c36eb0dd-e939-4190-9e3c-4ab7871864aa)
+https://github.com/user-attachments/assets/aca18cec-8109-4efd-afe7-0d7be685d513
 
 * The viewer navigates to the custom event URL.
 * The page initialises; JavaScript injects the Session ID for the default language (English).
