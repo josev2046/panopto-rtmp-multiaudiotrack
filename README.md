@@ -56,7 +56,7 @@ https://github.com/user-attachments/assets/a06daff0-dc8f-4081-aa22-b9bf7ecdec2a
 * The script updates the iframe `src` attribute.
 * **Outcome:** The player buffers briefly (approximately 1-2 seconds) and resumes playback with the Spanish audio track.
 
-## Future Enhancements: Locale-Based Stream Initialisation
+## Future enhancements: locale-based stream initialisation
 
 At present, the player wrapper defaults to a static primary language (e.g., English) upon loading. A proposed enhancement involves implementing logic to automatically detect the viewer's locale, reducing the need for manual selection by the end-user.
 
@@ -64,8 +64,8 @@ This feature would function by querying the browser's `navigator.language` prope
 
 This code is subsequently cross-referenced against the internal `streamMap` object:
 
-* **Match Found:** If the detected locale corresponds to an available stream, that specific Panopto Session ID is injected into the iframe source immediately.
-* **No Match (Fallback):** If the locale is unsupported, the system reverts to the standard default language to ensure the broadcast remains accessible.
+* **Match found:** If the detected locale corresponds to an available stream, that specific Panopto Session ID is injected into the iframe source immediately.
+* **No match (fallback):** If the locale is unsupported, the system reverts to the standard default language to ensure the broadcast remains accessible.
 
 
 To deploy this functionality, the static initialisation script within the HTML wrapper would be augmented with conditional logic:
@@ -87,3 +87,26 @@ const initialId = streamMap.hasOwnProperty(userLocale)
 document.getElementById('panopto-player-frame').src = 
     `https://{site}/Panopto/Pages/Embed.aspx?id=${initialId}&autoplay=true`;
 ```
+## Other notes (as per peer review)
+
+* While `autoplay=true` is included, browser autoplay policies may still require user interaction. Consider adding a fallback message or play button overlay.
+  
+* Maybe worth adding a validation for invalid language keys or missing GUIDs:
+
+```javascript
+function getStreamURL(languageKey) {
+   const guid = streamMap[languageKey];
+   if (!guid) {
+       console.error(`No GUID found for language: ${languageKey}`);   
+       return null;
+   }
+   return `${baseURL}?id=${guid}&autoplay=true${baseParams}`;
+}
+```
+
+* Consider adding a loading indicator during stream switches to improve UX.
+  
+* Add aria-label attributes to the iframe and select element for accessibility if needed.
+
+  
+* The `offerviewer=true` parameter seems counterintuitive - typically you'd want `offerviewer=false` to hide the viewer pane for a cleaner interface.
