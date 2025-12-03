@@ -34,7 +34,7 @@ This topology addresses requirements for high-volume automated translation witho
 <img width="620" height="1090" alt="image" src="https://github.com/user-attachments/assets/187befe2-006e-4479-ad64-e58b69bfef8b" />
 
 * **Ingest:** A single contribution stream is sent to **AWS Elemental MediaLive**.
-* **Processing:** MediaLive creates an adaptive bitrate (ABR) stream which is pushed to **SyncWords** via WebDAV.
+* **Processing:** MediaLive creates an adaptive bitrate (ABR) stream which is pushed to **SyncWords** or similar via WebDAV.
 * **AI Translation & Dubbing:**
     * SyncWords performs automatic speech-to-text transcription.
     * Machine translation engines generate multi-language subtitles.
