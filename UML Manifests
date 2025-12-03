@@ -122,3 +122,48 @@ Rel_Down(panopto_platform, panopto_player, "Delivers HLS Stream")
 Rel_Up(viewer, web_logic, "Selects Language", "UI Interaction")
 
 @enduml
+
+--
+
+Topology C
+
+@startuml
+!include <C4/C4_Container>
+
+' Forces the layout to be vertical as requested
+LAYOUT_TOP_DOWN()
+
+System_Boundary(c1, "Production & Distribution Environment") {
+    
+    ' Step 1: Ingest & Processing
+    Container(medialive, "AWS MediaLive", "Cloud Service", "Ingests Master Feed. Transcodes to ABR for SyncWords.")
+    
+    ' Step 2: AI Translation Layer
+    Container(syncwords, "SyncWords & Amazon Polly", "SaaS & AI Service", "Transcribes, Translates, and Generates Synthetic Audio.")
+
+    ' Connection between AWS and SyncWords
+    Rel_Down(medialive, syncwords, "HLS/WebDAV Stream")
+
+    System(panopto_platform, "Panopto Cloud", "Ingests RTMP & Delivers Webcast")
+    
+    ' Visualising the Fan-Out: SyncWords pushes the translated feeds
+    Rel_Down(syncwords, panopto_platform, "RTMP Stream A (English)")
+    Rel_Down(syncwords, panopto_platform, "RTMP Stream B (Spanish - AI)")
+}
+
+System_Boundary(c2, "Client Endpoint (Browser)") {
+    Container(web_logic, "Switcher Logic", "HTML/JS", "Detects Locale & Maps to GUID")
+    
+    Container(panopto_player, "Panopto Iframe", "Embed.aspx Wrapper", "Renders the Video")
+    
+    ' Logical connection within the boundary
+    Rel_Right(web_logic, panopto_player, "Updates 'src' attribute")
+}
+
+Person_Ext(viewer, "Viewer", "Watches Live Event")
+
+' Connect the major blocks vertically
+Rel_Down(panopto_platform, panopto_player, "Delivers HLS Stream")
+Rel_Up(viewer, web_logic, "Selects Language", "UI Interaction")
+
+@enduml
