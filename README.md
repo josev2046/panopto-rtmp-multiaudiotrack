@@ -110,3 +110,5 @@ function getStreamURL(languageKey) {
 
   
 * The `offerviewer=true` parameter seems counterintuitive - typically you'd want `offerviewer=false` to hide the viewer pane for a cleaner interface.
+
+I have reflected all those changes in the `stream-locale-switcher` HTML in this repository.
