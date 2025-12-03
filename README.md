@@ -1,4 +1,4 @@
-# Panopto Multi-Language Live Streaming Solution
+# Multi-Language live streaming in Panopto
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17788084.svg)](https://doi.org/10.5281/zenodo.17788084)
 
@@ -6,7 +6,7 @@ This repository documents a client-side stream switching solution designed to su
 
 As Panopto’s native architecture currently supports a single audio track per video stream, this solution wraps standard RTMP ingestion in a customised HTML interface. This centralises multiple language streams into a single URL, facilitating dynamic player switching without disrupting the viewer experience via page reloads.
 
-## Architecture Overview
+## Architecture overview
 
 This prototype bridges standard Panopto delivery with multi-track requirements via a lightweight web wrapper. Three distinct upstream topologies have been modelled for this implementation: separate hardware encoders, an enterprise "fan-out" using AWS Elemental Live, and a cloud-native automated approach utilising AI translation.
 
@@ -45,14 +45,14 @@ This topology addresses requirements for high-volume automated translation witho
 * **Routing to Panopto:** The resulting distinct audio/video feeds (now containing AI-dubbed audio) are forwarded as RTMP inputs to their respective Panopto Session GUIDs, maintaining compatibility with the client-side switcher.
 ---
 
-## The Client-Side Wrapper
+## The client-side wrapper
 Regardless of the upstream topology chosen, the client-side experience remains consistent. While Panopto provides an Embed API, the native interface lacks dynamic session switching. To address this:
 
 1.  **Hosting:** A standalone HTML page hosts a Mapping Object (Language Name to Panopto Session GUID).
 2.  **Interface:** A simplified dropdown UI facilitates language selection.
 3.  **Initialisation:** The page targets a single iframe (`id="panopto-player-frame"`) to load the default language immediately.
 
-### Stream Switching Logic
+### Stream switching logic
 To prevent the full page refresh standard in browser behaviour, the wrapper employs the following logic:
 
 * **Hot Swapping:** JavaScript intercepts the dropdown change event to retrieve the corresponding Session ID.
@@ -61,7 +61,7 @@ To prevent the full page refresh standard in browser behaviour, the wrapper empl
 
 ---
 
-## Encoder Configuration Reference (AWS Elemental Live)
+## Encoder configuration reference (AWS Elemental Live)
 
 If utilising **Topology B**, the encoder must be configured to map specific source audio channels to the corresponding Panopto RTMP endpoints.
 
@@ -76,15 +76,15 @@ If utilising **Topology B**, the encoder must be configured to map specific sour
 
 ---
 
-## User Journeys
+## User journeys
 
-### 1. AV Producer Journey (Setup)
+### 1. AV producer journey (setup)
 * The AV team configures the upstream encoding environment (via Topology A or B).
 * **English Feed:** Pushes to Panopto Session A.
 * **Spanish Feed:** Pushes to Panopto Session B.
 * **Outcome:** Two distinct, parallel broadcasts are active within the Panopto cloud environment.
 
-### 2. Viewer Journey (Consumption)
+### 2. Viewer journey (consumption)
 
 
 https://github.com/user-attachments/assets/c36eb0dd-e939-4190-9e3c-4ab7871864aa
@@ -98,7 +98,7 @@ https://github.com/user-attachments/assets/c36eb0dd-e939-4190-9e3c-4ab7871864aa
 
 ---
 
-## Future Enhancements: Locale-Based Stream Initialisation
+## Further enhancements: Locale-based stream initialisation
 
 At present, the player wrapper defaults to a static primary language (e.g., English) upon loading. A proposed enhancement involves implementing logic to automatically detect the viewer's locale, reducing the need for manual selection by the end-user.
 
@@ -114,40 +114,27 @@ To deploy this functionality, the static initialisation script within the HTML w
 ```javascript
 
 // 1. Define the default fallback (e.g., English)
-
 const defaultLang = 'en';
 
-
-
 // 2. Detect and normalize browser language (e.g., 'es-MX' becomes 'es')
-
 const userLocale = (navigator.language || navigator.userLanguage).split('-')[0].toLowerCase();
 
-
-
 // 3. Determine the startup ID
-
 // If the detected language exists in our map, use it. Otherwise, use default.
-
 const initialId = streamMap.hasOwnProperty(userLocale) 
-
     ? streamMap[userLocale] 
-
     : streamMap[defaultLang];
-
-
 
 // 4. Initialize Player
 
 document.getElementById('panopto-player-frame').src = 
-
     `https://{site}/Panopto/Pages/Embed.aspx?id=${initialId}&autoplay=true`;
 
 ```
 
 ---
 
-## Implementation Notes
+## Implementation notes
 
 The following considerations have been addressed following peer review:
 
