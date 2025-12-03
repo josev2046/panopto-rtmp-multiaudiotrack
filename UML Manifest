@@ -32,3 +32,54 @@ Rel_Up(viewer, panopto_player, "Selects Language", "UI Interaction")
 
 
 @enduml
+
+--
+
+Alternative "Single-Input / Multi-Output Signal Flow"
+
+@startuml
+skinparam componentStyle uml2
+skinparam monochrome true
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 80
+skinparam ranksep 60
+left to right direction
+
+title Single-Input / Multi-Output Signal Flow
+
+package "Production Gallery" {
+    [SDI Source] as SDI
+    note bottom of SDI : Video + Embedded Audio\n(Ch1-2: ENG, Ch3-4: ESP)
+    
+    component "AWS Elemental Live" as Encoder
+}
+
+package "Panopto Cloud" {
+    [Session: English] as CloudEN
+    [Session: Spanish] as CloudES
+    
+    ' Force Vertical Layout (English above Spanish)
+    CloudEN -[hidden]- CloudES
+}
+
+package "Client Browser" {
+    [HTML Wrapper] as Logic
+    [Player Iframe] as Player
+}
+
+' 1. Input Flow
+SDI --> Encoder
+
+' 2. Fan-Out Flow (Encoder to Cloud)
+Encoder --> CloudEN : Extract Pair 1\n(RTMP Stream A)
+Encoder --> CloudES : Extract Pair 2\n(RTMP Stream B)
+
+' 3. Delivery Flow (Cloud to Player)
+CloudEN --> Player : HLS
+CloudES --> Player : HLS
+
+' 4. Control Logic (Wrapper to Player)
+Logic ..> Player : Inject GUID
+
+@enduml
