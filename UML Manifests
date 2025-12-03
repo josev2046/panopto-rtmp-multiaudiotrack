@@ -83,3 +83,42 @@ CloudES --> Player : HLS
 Logic ..> Player : Inject GUID
 
 @enduml
+
+--
+
+Alternative "Single-Input / Multi-Output Signal Flow" #2
+
+@startuml
+!include <C4/C4_Container>
+
+' Forces the layout to be vertical as requested
+LAYOUT_TOP_DOWN()
+
+System_Boundary(c1, "Production & Distribution Environment") {
+    
+    ' Updated: Single Hardware Appliance instead of multiple encoders
+    Container(elemental, "AWS Elemental Live", "Hardware Appliance", "Ingests 1x SDI Source. Splits Audio Pairs to Output Groups.")
+    
+    System(panopto_platform, "Panopto Cloud", "Ingests RTMP & Delivers Webcast")
+    
+    ' Visualising the Fan-Out: One Box, Two Streams
+    Rel_Down(elemental, panopto_platform, "RTMP Stream A (English)")
+    Rel_Down(elemental, panopto_platform, "RTMP Stream B (Spanish)")
+}
+
+System_Boundary(c2, "Client Endpoint (Browser)") {
+    Container(web_logic, "Switcher Logic", "HTML/JS", "Detects Locale & Maps to GUID")
+    
+    Container(panopto_player, "Panopto Iframe", "Embed.aspx Wrapper", "Renders the Video")
+    
+    ' Logical connection within the boundary
+    Rel_Right(web_logic, panopto_player, "Updates 'src' attribute")
+}
+
+Person_Ext(viewer, "Viewer", "Watches Live Event")
+
+' Connect the major blocks vertically
+Rel_Down(panopto_platform, panopto_player, "Delivers HLS Stream")
+Rel_Up(viewer, web_logic, "Selects Language", "UI Interaction")
+
+@enduml
