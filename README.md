@@ -12,14 +12,19 @@ This solution bridges standard Panopto delivery with multi-track requirements vi
 
 <img width="627" height="824" alt="Architecture Diagram" src="https://github.com/user-attachments/assets/7a25b33e-67b3-4364-93ff-e96dcfb72fe4" />
 
+Alternatively, this architecture could be underpinned by a "Single-Input / Multi-Output" encoding topology.
+
+<img width="620" height="881" alt="image" src="https://github.com/user-attachments/assets/27d3c0cf-adc4-4c9f-82f2-9d0b04708913" />
+
+
 The architecture comprises three core components:
 
 ### 1. Ingest and Session Provisioning
-Panopto natively supports unlimited concurrent webcasts. This solution leverages that capability as follows:
+To ensure frame-accurate synchronisation between languages, this solution utilises a unified encoding appliance rather than discrete physical encoders.
 
-* **Provisioning:** Distinct "Webcast" sessions are created for each language (e.g., `Event_EN`, `Event_ES`).
-* **Routing:** Unique RTMP URLs and Stream Keys are generated for each session.
-* **Synchronisation:** Alignment relies on simultaneous encoder start times. Minor latency variances (milliseconds) are expected but negligible for this use case.
+* **Ingest:** A single AWS Elemental Live appliance receives the master feed containing all audio tracks (e.g., SDI Embedded Audio Ch1-4).
+* **Fan-Out:** The encoder processes the video once but generates unique RTMP streams for each language by mapping specific audio pairs to distinct Output Groups.
+* **Synchronisation:** As all RTMP streams derive from a single system clock, the timecode is identical across all sessions. This minimises the visual discontinuity when a user switches languages, as the player seeks to the exact same timestamp on the new stream.
 
 ### 2. The Custom Player Wrapper
 While Panopto provides an Embed API, the native interface lacks dynamic session switching. To address this:
@@ -32,8 +37,25 @@ While Panopto provides an Embed API, the native interface lacks dynamic session 
 To prevent the full page refresh standard in browser behaviour, the wrapper employs the following logic:
 
 * **Hot Swapping:** JavaScript intercepts the dropdown change event to retrieve the corresponding Session ID.
-* **URL Construction:** The script dynamically constructs the new source URL: `https://{site}/Panopto/Pages/Embed.aspx?id={New_GUID}&autoplay=true`.
+* **URL Construction:** The script dynamically constructs the new source URL using the specific session GUID.
 * **Autoplay Enforcement:** The `autoplay=true` parameter is appended to ensure playback resumes immediately.
+
+---
+
+## Encoder Configuration Reference (AWS Elemental Live)
+
+To achieve the "Fan-Out" architecture, the encoder must be configured to map specific source audio channels to the corresponding Panopto RTMP endpoints.
+
+| Setting Category | Parameter | Value |
+| :--- | :--- | :--- |
+| **Input** | Audio Selector 1 | **Name:** `Audio_ENG`<br>**Source:** `Embedded`<br>**Track:** `1` (Pair 1) |
+| **Input** | Audio Selector 2 | **Name:** `Audio_ESP`<br>**Source:** `Embedded`<br>**Track:** `2` (Pair 2) |
+| **Output Group 1** | Destination | `rtmp://[Panopto-Ingest-URL]/[StreamKey-A]` |
+| **Stream 1** | Audio Source | `Audio_ENG` |
+| **Output Group 2** | Destination | `rtmp://[Panopto-Ingest-URL]/[StreamKey-B]` |
+| **Stream 2** | Audio Source | `Audio_ESP` |
+
+---
 
 ## User Journeys
 
