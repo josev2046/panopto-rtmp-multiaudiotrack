@@ -8,7 +8,7 @@ As Panopto’s native architecture currently supports a single audio track per v
 
 ## Architecture Overview
 
-This solution bridges standard Panopto delivery with multi-track requirements via a lightweight web wrapper. Two distinct upstream topologies have been modelled for this implementation: a standard multi-encoder approach and an optimised enterprise approach using AWS Elemental Live.
+This prototype bridges standard Panopto delivery with multi-track requirements via a lightweight web wrapper. Three distinct upstream topologies have been modelled for this implementation: separate hardware encoders, an enterprise "fan-out" using AWS Elemental Live, and a cloud-native automated approach utilising AI translation.
 
 ### Topology A: Discrete Hardware Encoders (Standard Implementation)
 In this configuration, separate physical encoding units are provisioned for each language. This is often utilised when legacy hardware is available or when language feeds originate from disparate physical locations.
@@ -30,6 +30,19 @@ To ensure frame-accurate synchronisation and reduce hardware footprint, this top
 * **Fan-Out:** The encoder processes the video signal once but generates unique RTMP streams for each language by mapping specific audio pairs to distinct Output Groups.
 * **Synchronisation:** As all RTMP streams derive from a single system clock, the timecode is identical across all sessions. This minimises visual discontinuity when a user switches languages.
 
+### Topology C: Cloud-Native Automation (AWS Media Services & SyncWords; adapted from [this](https://aws.amazon.com/blogs/media/translate-live-sports-automatically-to-reach-international-fans-with-aws-media-services-and-syncwords/))
+This topology addresses requirements for high-volume automated translation without the logistical complexity of human interpreters. It leverages AWS Media Services for video processing and SyncWords for AI-driven dubbing and captioning.
+
+<img width="620" height="1090" alt="image" src="https://github.com/user-attachments/assets/187befe2-006e-4479-ad64-e58b69bfef8b" />
+
+
+* **Ingest:** A single contribution stream is sent to **AWS Elemental MediaLive**.
+* **Processing:** MediaLive creates an adaptive bitrate (ABR) stream which is pushed to **SyncWords** via WebDAV.
+* **AI Translation & Dubbing:**
+    * SyncWords performs automatic speech-to-text transcription.
+    * Machine translation engines generate multi-language subtitles.
+    * **Amazon Polly** is utilised to generate synthetic audio dubbing, synchronised to the sports or event dialogue.
+* **Routing to Panopto:** The resulting distinct audio/video feeds (now containing AI-dubbed audio) are forwarded as RTMP inputs to their respective Panopto Session GUIDs, maintaining compatibility with the client-side switcher.
 ---
 
 ## The Client-Side Wrapper
