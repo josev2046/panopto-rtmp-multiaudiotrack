@@ -15,7 +15,6 @@ In this configuration, separate physical encoding units are provisioned for each
 
 <img width="627" height="824" alt="image" src="https://github.com/user-attachments/assets/8c769fdb-9675-4c5e-beb7-f2d293c537dd" />
 
-
 * **Ingest:** Multiple encoders (e.g., Encoder 1 for English, Encoder 2 for Spanish) operate independently.
 * **Routing:** Each encoder pushes to a unique Panopto Session GUID.
 * **Synchronisation:** Alignment relies on the manual synchronisation of "Start" times. Minor latency variances (drift) are expected between languages.
@@ -25,16 +24,14 @@ To ensure frame-accurate synchronisation and reduce hardware footprint, this top
 
 <img width="620" height="881" alt="image" src="https://github.com/user-attachments/assets/380d6001-90e6-401f-928b-b8efb60884d5" />
 
-
 * **Ingest:** A single AWS Elemental Live appliance receives a master feed containing all audio tracks (e.g., SDI Embedded Audio Ch1-4).
 * **Fan-Out:** The encoder processes the video signal once but generates unique RTMP streams for each language by mapping specific audio pairs to distinct Output Groups.
 * **Synchronisation:** As all RTMP streams derive from a single system clock, the timecode is identical across all sessions. This minimises visual discontinuity when a user switches languages.
 
-### Topology C: Cloud-Native Automation (AWS Media Services & SyncWords; as inspired by [this](https://aws.amazon.com/blogs/media/translate-live-sports-automatically-to-reach-international-fans-with-aws-media-services-and-syncwords/)) 
+### Topology C: Cloud-Native Automation (AWS Media Services & SyncWords; as inspired by [this](https://aws.amazon.com/blogs/media/translate-live-sports-automatically-to-reach-international-fans-with-aws-media-services-and-syncwords/))
 This topology addresses requirements for high-volume automated translation without the logistical complexity of human interpreters. It leverages AWS Media Services for video processing and SyncWords for AI-driven dubbing and captioning.
 
 <img width="620" height="1090" alt="image" src="https://github.com/user-attachments/assets/187befe2-006e-4479-ad64-e58b69bfef8b" />
-
 
 * **Ingest:** A single contribution stream is sent to **AWS Elemental MediaLive**.
 * **Processing:** MediaLive creates an adaptive bitrate (ABR) stream which is pushed to **SyncWords** via WebDAV.
@@ -43,6 +40,7 @@ This topology addresses requirements for high-volume automated translation witho
     * Machine translation engines generate multi-language subtitles.
     * **Amazon Polly** is utilised to generate synthetic audio dubbing, synchronised to the sports or event dialogue.
 * **Routing to Panopto:** The resulting distinct audio/video feeds (now containing AI-dubbed audio) are forwarded as RTMP inputs to their respective Panopto Session GUIDs, maintaining compatibility with the client-side switcher.
+
 ---
 
 ## The client-side wrapper
@@ -61,9 +59,10 @@ To prevent the full page refresh standard in browser behaviour, the wrapper empl
 
 ---
 
-## Encoder configuration reference (AWS Elemental Live)
+## Encoder configuration reference
 
-If utilising **Topology B**, the encoder must be configured to map specific source audio channels to the corresponding Panopto RTMP endpoints.
+### AWS Elemental Live (Topology B)
+The encoder must be configured to map specific source audio channels to the corresponding Panopto RTMP endpoints.
 
 | Setting Category | Parameter | Value |
 | :--- | :--- | :--- |
@@ -74,21 +73,27 @@ If utilising **Topology B**, the encoder must be configured to map specific sour
 | **Output Group 2** | Destination | `rtmp://[Panopto-Ingest-URL]/[StreamKey-B]` |
 | **Stream 2** | Audio Source | `Audio_ESP` |
 
+### AWS Media Services & SyncWords (Topology C)
+For automated workflows, the configuration moves from physical appliances to cloud infrastructure.
+
+* **MediaLive:** Configured to output HLS/DASH for SyncWords ingestion.
+* **SyncWords API:** Requires integration to define target languages (e.g., French, German) and voice profiles for Amazon Polly.
+* **MediaPackage:** Acts as the origin service, enabling the packaging of content with specific language tracks.
+* **Output:** The translated streams must be bridged back to RTMP if direct ingestion into Panopto is required.
+
 ---
 
 ## User journeys
 
 ### 1. AV producer journey (setup)
-* The AV team configures the upstream encoding environment (via Topology A or B).
-* **English Feed:** Pushes to Panopto Session A.
-* **Spanish Feed:** Pushes to Panopto Session B.
+* The AV team selects the upstream topology based on resource availability (Human Interpreters vs AI Automation).
+    * **Topology A/B:** Interpreters provide live audio; hardware routes feeds to Panopto.
+    * **Topology C:** The producer configures SyncWords to automatically translate the master feed into English and Spanish using AI.
 * **Outcome:** Two distinct, parallel broadcasts are active within the Panopto cloud environment.
 
 ### 2. Viewer journey (consumption)
 
-
 https://github.com/user-attachments/assets/c36eb0dd-e939-4190-9e3c-4ab7871864aa
-
 
 * The viewer navigates to the custom event URL.
 * The page initialises; JavaScript injects the Session ID for the default language (English).
