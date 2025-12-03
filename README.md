@@ -13,7 +13,7 @@ This prototype bridges standard Panopto delivery with multi-track requirements v
 ### Topology A: Discrete Hardware Encoders (Standard Implementation)
 In this configuration, separate physical encoding units are provisioned for each language. This is often utilised when legacy hardware is available or when language feeds originate from disparate physical locations.
 
-<img width="627" height="824" alt="image" src="https://github.com/user-attachments/assets/8c769fdb-9675-4c5e-beb7-f2d293c537dd" />
+<img width="627" height="824" alt="Topology A Schematic" src="https://github.com/user-attachments/assets/8c769fdb-9675-4c5e-beb7-f2d293c537dd" />
 
 * **Ingest:** Multiple encoders (e.g., Encoder 1 for English, Encoder 2 for Spanish) operate independently.
 * **Routing:** Each encoder pushes to a unique Panopto Session GUID.
@@ -22,19 +22,19 @@ In this configuration, separate physical encoding units are provisioned for each
 ### Topology B: AWS Elemental Live "Fan-Out" (Enterprise Implementation)
 To ensure frame-accurate synchronisation and reduce hardware footprint, this topology utilises a single unified encoding appliance.
 
-<img width="620" height="881" alt="image" src="https://github.com/user-attachments/assets/380d6001-90e6-401f-928b-b8efb60884d5" />
+<img width="620" height="881" alt="Topology B Schematic" src="https://github.com/user-attachments/assets/380d6001-90e6-401f-928b-b8efb60884d5" />
 
 * **Ingest:** A single AWS Elemental Live appliance receives a master feed containing all audio tracks (e.g., SDI Embedded Audio Ch1-4).
 * **Fan-Out:** The encoder processes the video signal once but generates unique RTMP streams for each language by mapping specific audio pairs to distinct Output Groups.
 * **Synchronisation:** As all RTMP streams derive from a single system clock, the timecode is identical across all sessions. This minimises visual discontinuity when a user switches languages.
 
-### Topology C: Cloud-Native Automation (AI-Driven Localization)
+### Topology C: Cloud-Native Automation (AI-Driven Localisation)
 This topology addresses requirements for high-volume automated translation without the logistical complexity of human interpreters. It leverages cloud-based video processing and an AI-driven middleware layer for dubbing and captioning (an approach comparable to [this reference architecture](https://aws.amazon.com/blogs/media/translate-live-sports-automatically-to-reach-international-fans-with-aws-media-services-and-syncwords/)).
 
-<img width="620" height="1090" alt="image" src="https://github.com/user-attachments/assets/187befe2-006e-4479-ad64-e58b69bfef8b" />
+<img width="620" height="1090" alt="Topology C Schematic" src="https://github.com/user-attachments/assets/187befe2-006e-4479-ad64-e58b69bfef8b" />
 
 * **Ingest:** A single contribution stream is sent to a **Cloud Encoding Service**.
-* **Processing:** The encoder creates an adaptive bitrate (ABR) stream which is pushed to the **AI Localization Middleware** via a supported protocol (e.g., WebDAV or SRT).
+* **Processing:** The encoder creates an adaptive bitrate (ABR) stream which is pushed to the **AI Localisation Middleware** via a supported protocol (e.g., WebDAV or SRT).
 * **AI Translation & Dubbing:**
     * The middleware performs automatic speech-to-text transcription.
     * Machine translation engines generate multi-language subtitles.
@@ -76,8 +76,8 @@ The encoder must be configured to map specific source audio channels to the corr
 ### Cloud-Native AI Middleware (Topology C)
 For automated workflows, the configuration moves from physical appliances to cloud infrastructure.
 
-* **Upstream Encoder:** Configured to output a clean ABR stream (HLS/DASH) suitable for ingestion by the localization platform.
-* **Localization Platform:** Requires integration to define target languages (e.g., French, German) and voice profiles for the synthetic audio generation.
+* **Upstream Encoder:** Configured to output a clean ABR stream (HLS/DASH) suitable for ingestion by the localisation platform.
+* **Localisation Platform:** Requires integration to define target languages (e.g., French, German) and voice profiles for the synthetic audio generation.
 * **Origin/Packaging:** The middleware acts as the origin service, packaging the content with specific language tracks.
 * **Output:** The translated streams must be bridged back to RTMP if direct ingestion into Panopto is required.
 
@@ -88,12 +88,16 @@ For automated workflows, the configuration moves from physical appliances to clo
 ### 1. AV producer journey (setup)
 * The AV team selects the upstream topology based on resource availability (Human Interpreters vs AI Automation).
     * **Topology A/B:** Interpreters provide live audio; hardware routes feeds to Panopto.
-    * **Topology C:** The producer configures the AI localization platform to automatically translate the master feed into English and Spanish.
+    * **Topology C:** The producer configures the AI localisation platform to automatically translate the master feed into English and Spanish.
 * **Outcome:** Two distinct, parallel broadcasts are active within the Panopto cloud environment.
 
 ### 2. Viewer journey (consumption)
 
-https://github.com/user-attachments/assets/aca18cec-8109-4efd-afe7-0d7be685d513
+
+
+https://github.com/user-attachments/assets/abad2522-f2d8-45ad-a6da-61f2ee8ffe92
+
+
 
 * The viewer navigates to the custom event URL.
 * The page initialises; JavaScript injects the Session ID for the default language (English).
