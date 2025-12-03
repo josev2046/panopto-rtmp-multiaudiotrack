@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Language Live Event | Panopto Wrapper Prototype - after peer review</title>
+    <style>
+        /* Main Layout & Player Wrapper Styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background-color: #2c2c2c;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #464646;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.2rem; }
+        
+        .status-indicator {
+            font-size: 0.8rem;
+            color: #ff4444;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* * Responsive Video Container 
+         * Uses padding-bottom hack to enforce 16:9 Aspect Ratio.
+         * Now includes positioning context for overlays.
+         */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; 
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1; /* Sits below the overlays */
+        }
+
+        /* * Overlay: Loading Indicator
+         * Displays whilst the iframe content is being fetched.
+         */
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none; /* Hidden by default, toggled via JS */
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+            flex-direction: column;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* * Overlay: Start / Autoplay Policy Handling
+         * Forces user interaction to allow audio playback.
+         */
+        .start-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3;
+            cursor: pointer;
+        }
+
+        .play-button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #e31c23; /* Panopto Red approximation */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .play-button:hover {
+            background-color: #b0151b;
+        }
+
+        /* Controls & Dropdown Styling */
+        .controls {
+            padding: 20px;
+            background-color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        label { font-weight: bold; color: #ccc; }
+
+        select {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .description {
+            padding: 25px;
+            font-size: 0.95rem;
+            color: #cccccc;
+            line-height: 1.6;
+        }
+        
+        .tech-note {
+            font-size: 0.85rem; 
+            color: #888; 
+            margin-top: 15px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Executive Town Hall 2025</h1>
+            <span class="status-indicator">● Live</span>
+        </div>
+
+        <div class="video-wrapper">
+            <div id="loading-overlay" class="loading-overlay">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px; font-size: 0.9rem;">Switching Stream...</p>
+            </div>
+
+            <div id="start-overlay" class="start-overlay">
+                <button class="play-button" id="start-btn">Join Broadcast</button>
+            </div>
+
+            <iframe 
+                id="panopto-player-frame" 
+                src="" 
+                allowfullscreen 
+                allow="autoplay"
+                aria-label="Video Player Frame"
+                title="Live Event Video Player">
+            </iframe>
+        </div>
+
+        <div class="controls">
+            <label for="language-select">Audio Language:</label>
+            <select id="language-select" aria-label="Select Audio Stream Language">
+                <option value="en">English (Default)</option>
+                <option value="fr">French (Recurrent)</option>
+                <option value="es">Spanish (Recurrent)</option>
+            </select>
+        </div>
+
+        <div class="description">
+            <p>
+                This repository demonstrates a multi-language live streaming solution using Panopto. 
+                Separate encoders send language-specific streams to Panopto, and a web page dynamically 
+                switches between them based on user selection.
+            </p>
+            <p class="tech-note">
+                <strong>System Note:</strong> The system automatically detects your browser locale on load. 
+                Selecting a different language manually triggers client-side switching logic. 
+                The player hot-swaps the Session ID and enforces autoplay to minimize interruption.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration: Stream Mapping ---
+        // Maps ISO language codes to specific Panopto Session IDs (GUIDs).
+        // Ensure these keys match the value attributes in the HTML select element.
+        const streamMap = {
+            "en": "00000000-0000-0000-0000-000000000000", // Placeholder for English GUID
+            "fr": "ccc00376-d6bc-4982-a2d6-b3a60113fe84", 
+            "es": "d3276d9a-f209-41dc-a6d5-b3a60114401c" 
+        };
+
+        // Base Configuration for the Panopto Embed API
+        const baseURL = "https://velazquez.cloud.panopto.eu/Panopto/Pages/Embed.aspx";
+        
+        // URL Parameters:
+        // offerviewer=false: Hides the option to open the full viewer for a cleaner UI.
+        // showbrand=false: Removes Panopto branding where permissible.
+        const baseParams = "&offerviewer=false&showtitle=true&showbrand=false&captions=false&interactivity=all";
+
+        // DOM Element References
+        const playerFrame = document.getElementById('panopto-player-frame');
+        const selector = document.getElementById('language-select');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const startOverlay = document.getElementById('start-overlay');
+        const startBtn = document.getElementById('start-btn');
+
+        // --- Core Logic: Stream Construction & Validation ---
+
+        /**
+         * Constructs the full Panopto Embed URL with validation.
+         * Appends 'autoplay=true' to ensure playback resumes immediately.
+         * * @param {string} languageKey - The ISO code of the requested language.
+         * @returns {string|null} The formatted URL or null if validation fails.
+         */
+        function getStreamURL(languageKey) {
+            const guid = streamMap[languageKey];
+            
+            // Validation: Ensure the requested language maps to a valid GUID.
+            if (!guid) {
+                console.error(`Error: No GUID found for language key: ${languageKey}`);   
+                return null;
+            }
+            
+            return `${baseURL}?id=${guid}&autoplay=true${baseParams}`;
+        }
+
+        // --- User Experience: Overlay Management ---
+
+        /**
+         * Displays the loading spinner.
+         */
+        function showLoader() {
+            loadingOverlay.style.display = 'flex';
+        }
+
+        /**
+         * Hides the loading spinner.
+         * Triggered via the iframe's onload event.
+         */
+        function hideLoader() {
+            loadingOverlay.style.display = 'none';
+        }
+
+        // Event Listener: Detect when the iframe has fully loaded the new source.
+        playerFrame.addEventListener('load', () => {
+            hideLoader();
+            console.log("Stream source loaded successfully.");
+        });
+
+        // --- Initialisation: Locale Detection ---
+
+        /**
+         * Determines the initial stream based on the user's browser settings.
+         * Returns a valid language key (e.g., 'es', 'fr') or defaults to 'en'.
+         */
+        function getInitialLanguage() {
+            const defaultLang = 'en';
+            
+            // Acquire browser language (e.g., 'es-MX') and normalise to ISO code ('es').
+            // Handles browser inconsistencies (navigator.language vs navigator.userLanguage).
+            const rawLocale = navigator.language || navigator.userLanguage; 
+            const userLocale = rawLocale ? rawLocale.split('-')[0].toLowerCase() : defaultLang;
+
+            console.log(`Detected Locale: ${rawLocale} | Normalised: ${userLocale}`);
+
+            // Check if the detected locale exists in our map; otherwise fallback.
+            return streamMap.hasOwnProperty(userLocale) ? userLocale : defaultLang;
+        }
+
+        // --- Event Listeners & State Management ---
+
+        // 1. System Load
+        // Sets the dropdown to the detected language but does NOT load the source immediately.
+        // We wait for user interaction (Start Button) to satisfy autoplay policies.
+        window.addEventListener('DOMContentLoaded', () => {
+            const initLang = getInitialLanguage();
+            
+            // Sync the dropdown UI with the detected language
+            selector.value = initLang; 
+            
+            console.log("System Ready. Waiting for user to start broadcast.");
+        });
+
+        // 2. Start Broadcast (Autoplay Policy Compliance)
+        // User explicitly clicks "Join" to allow the browser to permit audio autoplay.
+        startBtn.addEventListener('click', () => {
+            const currentLang = selector.value;
+            const streamUrl = getStreamURL(currentLang);
+
+            if (streamUrl) {
+                showLoader();
+                playerFrame.src = streamUrl;
+                startOverlay.style.display = 'none'; // Remove the start overlay permanently
+            }
+        });
+
+        // 3. Language Switching
+        // Detects dropdown changes and hot-swaps the video source.
+        selector.addEventListener('change', (event) => {
+            const selectedLang = event.target.value;
+            console.log("Hot-swapping to: " + selectedLang);
+            
+            const newUrl = getStreamURL(selectedLang);
+
+            if (newUrl) {
+                showLoader();
+                playerFrame.src = newUrl;
+            }
+        });
+
+    </script>
+</body>
+</html>
