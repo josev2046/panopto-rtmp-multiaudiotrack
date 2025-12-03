@@ -107,8 +107,7 @@ function getStreamURL(languageKey) {
 * Consider adding a loading indicator during stream switches to improve UX.
   
 * Add aria-label attributes to the iframe and select element for accessibility if needed.
-
   
 * The `offerviewer=true` parameter seems counterintuitive - typically you'd want `offerviewer=false` to hide the viewer pane for a cleaner interface.
 
-I have reflected all those changes in the `stream-locale-switcher` HTML in this repository.
+I have tried to accommodate those suggestions in the `stream-locale-switcher` HTML in this repository. Hope this helps. /JV
