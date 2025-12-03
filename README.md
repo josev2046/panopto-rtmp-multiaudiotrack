@@ -28,17 +28,17 @@ To ensure frame-accurate synchronisation and reduce hardware footprint, this top
 * **Fan-Out:** The encoder processes the video signal once but generates unique RTMP streams for each language by mapping specific audio pairs to distinct Output Groups.
 * **Synchronisation:** As all RTMP streams derive from a single system clock, the timecode is identical across all sessions. This minimises visual discontinuity when a user switches languages.
 
-### Topology C: Cloud-Native Automation (AWS Media Services & SyncWords; as inspired by [this](https://aws.amazon.com/blogs/media/translate-live-sports-automatically-to-reach-international-fans-with-aws-media-services-and-syncwords/))
-This topology addresses requirements for high-volume automated translation without the logistical complexity of human interpreters. It leverages AWS Media Services for video processing and SyncWords for AI-driven dubbing and captioning.
+### Topology C: Cloud-Native Automation (AI-Driven Localization)
+This topology addresses requirements for high-volume automated translation without the logistical complexity of human interpreters. It leverages cloud-based video processing and an AI-driven middleware layer for dubbing and captioning (an approach comparable to [this reference architecture](https://aws.amazon.com/blogs/media/translate-live-sports-automatically-to-reach-international-fans-with-aws-media-services-and-syncwords/)).
 
 <img width="620" height="1090" alt="image" src="https://github.com/user-attachments/assets/187befe2-006e-4479-ad64-e58b69bfef8b" />
 
-* **Ingest:** A single contribution stream is sent to **AWS Elemental MediaLive**.
-* **Processing:** MediaLive creates an adaptive bitrate (ABR) stream which is pushed to **SyncWords** or similar via WebDAV.
+* **Ingest:** A single contribution stream is sent to a **Cloud Encoding Service**.
+* **Processing:** The encoder creates an adaptive bitrate (ABR) stream which is pushed to the **AI Localization Middleware** via a supported protocol (e.g., WebDAV or SRT).
 * **AI Translation & Dubbing:**
-    * SyncWords performs automatic speech-to-text transcription.
+    * The middleware performs automatic speech-to-text transcription.
     * Machine translation engines generate multi-language subtitles.
-    * **Amazon Polly** is utilised to generate synthetic audio dubbing, synchronised to the sports or event dialogue.
+    * A **Text-to-Speech (TTS) Engine** is utilised to generate synthetic audio dubbing, synchronised to the sports or event dialogue.
 * **Routing to Panopto:** The resulting distinct audio/video feeds (now containing AI-dubbed audio) are forwarded as RTMP inputs to their respective Panopto Session GUIDs, maintaining compatibility with the client-side switcher.
 
 ---
@@ -61,7 +61,7 @@ To prevent the full page refresh standard in browser behaviour, the wrapper empl
 
 ## Encoder configuration reference
 
-### AWS Elemental Live (Topology B)
+### Hardware Encoders (Topology B)
 The encoder must be configured to map specific source audio channels to the corresponding Panopto RTMP endpoints.
 
 | Setting Category | Parameter | Value |
@@ -73,12 +73,12 @@ The encoder must be configured to map specific source audio channels to the corr
 | **Output Group 2** | Destination | `rtmp://[Panopto-Ingest-URL]/[StreamKey-B]` |
 | **Stream 2** | Audio Source | `Audio_ESP` |
 
-### AWS Media Services & SyncWords (Topology C)
+### Cloud-Native AI Middleware (Topology C)
 For automated workflows, the configuration moves from physical appliances to cloud infrastructure.
 
-* **MediaLive:** Configured to output HLS/DASH for SyncWords ingestion.
-* **SyncWords API:** Requires integration to define target languages (e.g., French, German) and voice profiles for Amazon Polly.
-* **MediaPackage:** Acts as the origin service, enabling the packaging of content with specific language tracks.
+* **Upstream Encoder:** Configured to output a clean ABR stream (HLS/DASH) suitable for ingestion by the localization platform.
+* **Localization Platform:** Requires integration to define target languages (e.g., French, German) and voice profiles for the synthetic audio generation.
+* **Origin/Packaging:** The middleware acts as the origin service, packaging the content with specific language tracks.
 * **Output:** The translated streams must be bridged back to RTMP if direct ingestion into Panopto is required.
 
 ---
@@ -88,7 +88,7 @@ For automated workflows, the configuration moves from physical appliances to clo
 ### 1. AV producer journey (setup)
 * The AV team selects the upstream topology based on resource availability (Human Interpreters vs AI Automation).
     * **Topology A/B:** Interpreters provide live audio; hardware routes feeds to Panopto.
-    * **Topology C:** The producer configures SyncWords to automatically translate the master feed into English and Spanish using AI.
+    * **Topology C:** The producer configures the AI localization platform to automatically translate the master feed into English and Spanish.
 * **Outcome:** Two distinct, parallel broadcasts are active within the Panopto cloud environment.
 
 ### 2. Viewer journey (consumption)
