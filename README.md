@@ -8,32 +8,38 @@ As Panopto’s native architecture currently supports a single audio track per v
 
 ## Architecture Overview
 
-This solution bridges standard Panopto delivery with multi-track requirements via a lightweight web wrapper.
+This solution bridges standard Panopto delivery with multi-track requirements via a lightweight web wrapper. Two distinct upstream topologies have been modelled for this implementation: a standard multi-encoder approach and an optimised enterprise approach using AWS Elemental Live.
 
-<img width="627" height="824" alt="Architecture Diagram" src="https://github.com/user-attachments/assets/7a25b33e-67b3-4364-93ff-e96dcfb72fe4" />
+### Topology A: Discrete Hardware Encoders (Standard Implementation)
+In this configuration, separate physical encoding units are provisioned for each language. This is often utilised when legacy hardware is available or when language feeds originate from disparate physical locations.
 
-Alternatively, this architecture could be underpinned by a "Single-Input / Multi-Output" encoding topology.
-
-<img width="620" height="881" alt="image" src="https://github.com/user-attachments/assets/27d3c0cf-adc4-4c9f-82f2-9d0b04708913" />
+<img width="627" height="824" alt="image" src="https://github.com/user-attachments/assets/8c769fdb-9675-4c5e-beb7-f2d293c537dd" />
 
 
-The architecture comprises three core components:
+* **Ingest:** Multiple encoders (e.g., Encoder 1 for English, Encoder 2 for Spanish) operate independently.
+* **Routing:** Each encoder pushes to a unique Panopto Session GUID.
+* **Synchronisation:** Alignment relies on the manual synchronisation of "Start" times. Minor latency variances (drift) are expected between languages.
 
-### 1. Ingest and Session Provisioning
-To ensure frame-accurate synchronisation between languages, this solution utilises a unified encoding appliance rather than discrete physical encoders.
+### Topology B: AWS Elemental Live "Fan-Out" (Enterprise Implementation)
+To ensure frame-accurate synchronisation and reduce hardware footprint, this topology utilises a single unified encoding appliance.
 
-* **Ingest:** A single AWS Elemental Live appliance receives the master feed containing all audio tracks (e.g., SDI Embedded Audio Ch1-4).
-* **Fan-Out:** The encoder processes the video once but generates unique RTMP streams for each language by mapping specific audio pairs to distinct Output Groups.
-* **Synchronisation:** As all RTMP streams derive from a single system clock, the timecode is identical across all sessions. This minimises the visual discontinuity when a user switches languages, as the player seeks to the exact same timestamp on the new stream.
+<img width="620" height="881" alt="image" src="https://github.com/user-attachments/assets/380d6001-90e6-401f-928b-b8efb60884d5" />
 
-### 2. The Custom Player Wrapper
-While Panopto provides an Embed API, the native interface lacks dynamic session switching. To address this:
 
-* **Hosting:** A standalone HTML page hosts a Mapping Object (Language Name to Panopto Session GUID).
-* **Interface:** A simplified dropdown UI facilitates language selection.
-* **Initialisation:** The page targets a single iframe (`id="panopto-player-frame"`) to load the default language immediately.
+* **Ingest:** A single AWS Elemental Live appliance receives a master feed containing all audio tracks (e.g., SDI Embedded Audio Ch1-4).
+* **Fan-Out:** The encoder processes the video signal once but generates unique RTMP streams for each language by mapping specific audio pairs to distinct Output Groups.
+* **Synchronisation:** As all RTMP streams derive from a single system clock, the timecode is identical across all sessions. This minimises visual discontinuity when a user switches languages.
 
-### 3. Stream Switching Logic
+---
+
+## The Client-Side Wrapper
+Regardless of the upstream topology chosen, the client-side experience remains consistent. While Panopto provides an Embed API, the native interface lacks dynamic session switching. To address this:
+
+1.  **Hosting:** A standalone HTML page hosts a Mapping Object (Language Name to Panopto Session GUID).
+2.  **Interface:** A simplified dropdown UI facilitates language selection.
+3.  **Initialisation:** The page targets a single iframe (`id="panopto-player-frame"`) to load the default language immediately.
+
+### Stream Switching Logic
 To prevent the full page refresh standard in browser behaviour, the wrapper employs the following logic:
 
 * **Hot Swapping:** JavaScript intercepts the dropdown change event to retrieve the corresponding Session ID.
@@ -44,7 +50,7 @@ To prevent the full page refresh standard in browser behaviour, the wrapper empl
 
 ## Encoder Configuration Reference (AWS Elemental Live)
 
-To achieve the "Fan-Out" architecture, the encoder must be configured to map specific source audio channels to the corresponding Panopto RTMP endpoints.
+If utilising **Topology B**, the encoder must be configured to map specific source audio channels to the corresponding Panopto RTMP endpoints.
 
 | Setting Category | Parameter | Value |
 | :--- | :--- | :--- |
@@ -60,17 +66,14 @@ To achieve the "Fan-Out" architecture, the encoder must be configured to map spe
 ## User Journeys
 
 ### 1. AV Producer Journey (Setup)
-* The AV team configures the upstream encoders.
-* **Encoder A (English)** pushes to Panopto Session A.
-* **Encoder B (Spanish)** pushes to Panopto Session B.
+* The AV team configures the upstream encoding environment (via Topology A or B).
+* **English Feed:** Pushes to Panopto Session A.
+* **Spanish Feed:** Pushes to Panopto Session B.
 * **Outcome:** Two distinct, parallel broadcasts are active within the Panopto cloud environment.
 
 ### 2. Viewer Journey (Consumption)
 
-
-
-https://github.com/user-attachments/assets/a06daff0-dc8f-4081-aa22-b9bf7ecdec2a
-
+**[Placeholder: Insert Viewer Journey Video/GIF Asset]**
 
 * The viewer navigates to the custom event URL.
 * The page initialises; JavaScript injects the Session ID for the default language (English).
@@ -78,58 +81,33 @@ https://github.com/user-attachments/assets/a06daff0-dc8f-4081-aa22-b9bf7ecdec2a
 * The script updates the iframe `src` attribute.
 * **Outcome:** The player buffers briefly (approximately 1-2 seconds) and resumes playback with the Spanish audio track.
 
-## Future enhancements: locale-based stream initialisation
+---
+
+## Future Enhancements: Locale-Based Stream Initialisation
 
 At present, the player wrapper defaults to a static primary language (e.g., English) upon loading. A proposed enhancement involves implementing logic to automatically detect the viewer's locale, reducing the need for manual selection by the end-user.
 
-This feature would function by querying the browser's `navigator.language` property to ascertain the user's preferred system language. The script would then parse this string to identify the primary language ISO code (for instance, truncating `es-MX` to `es`).
+This feature functions by querying the browser's `navigator.language` property to ascertain the user's preferred system language. The script parses this string to identify the primary language ISO code (for instance, truncating `es-MX` to `es`).
 
 This code is subsequently cross-referenced against the internal `streamMap` object:
 
 * **Match found:** If the detected locale corresponds to an available stream, that specific Panopto Session ID is injected into the iframe source immediately.
 * **No match (fallback):** If the locale is unsupported, the system reverts to the standard default language to ensure the broadcast remains accessible.
 
+To deploy this functionality, the static initialisation script within the HTML wrapper would be augmented with conditional logic.
 
-To deploy this functionality, the static initialisation script within the HTML wrapper would be augmented with conditional logic:
+**[Placeholder: Insert JavaScript Code Block for Locale Detection Logic]**
 
-```javascript
-// 1. Define the default fallback (e.g., English)
-const defaultLang = 'en';
+---
 
-// 2. Detect and normalize browser language (e.g., 'es-MX' becomes 'es')
-const userLocale = (navigator.language || navigator.userLanguage).split('-')[0].toLowerCase();
+## Implementation Notes
 
-// 3. Determine the startup ID
-// If the detected language exists in our map, use it. Otherwise, use default.
-const initialId = streamMap.hasOwnProperty(userLocale) 
-    ? streamMap[userLocale] 
-    : streamMap[defaultLang];
+The following considerations have been addressed following peer review:
 
-// 4. Initialize Player
-document.getElementById('panopto-player-frame').src = 
-    `https://{site}/Panopto/Pages/Embed.aspx?id=${initialId}&autoplay=true`;
-```
-## Other notes (as per peer review)
+* **Autoplay Policies:** While `autoplay=true` is included, browser autoplay policies may still require user interaction. A fallback message or play button overlay is recommended for production deployments.
+* **Error Handling:** Validation logic should be implemented to handle invalid language keys or missing GUIDs.
+* **User Experience:** Ideally, a loading indicator should be displayed during stream switches to mask the buffering period.
+* **Accessibility:** `aria-label` attributes should be applied to the iframe and select elements.
+* **Viewer Pane:** The parameter `offerviewer=false` should be utilised to conceal the viewer list, ensuring a cleaner interface.
 
-* While `autoplay=true` is included, browser autoplay policies may still require user interaction. Consider adding a fallback message or play button overlay.
-  
-* Maybe worth adding a validation for invalid language keys or missing GUIDs:
-
-```javascript
-function getStreamURL(languageKey) {
-   const guid = streamMap[languageKey];
-   if (!guid) {
-       console.error(`No GUID found for language: ${languageKey}`);   
-       return null;
-   }
-   return `${baseURL}?id=${guid}&autoplay=true${baseParams}`;
-}
-```
-
-* Consider adding a loading indicator during stream switches to improve UX.
-  
-* Add aria-label attributes to the iframe and select element for accessibility if needed.
-  
-* The `offerviewer=true` parameter seems counterintuitive - typically you'd want `offerviewer=false` to hide the viewer pane for a cleaner interface.
-
-I have tried to accommodate those suggestions in the `stream-locale-switcher` HTML in this repository. Hope this helps. /JV
+These suggestions have been accommodated in the `stream-locale-switcher.HTML` file located in this repository.
