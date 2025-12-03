@@ -73,7 +73,9 @@ If utilising **Topology B**, the encoder must be configured to map specific sour
 
 ### 2. Viewer Journey (Consumption)
 
-**[Placeholder: Insert Viewer Journey Video/GIF Asset]**
+
+https://github.com/user-attachments/assets/c36eb0dd-e939-4190-9e3c-4ab7871864aa
+
 
 * The viewer navigates to the custom event URL.
 * The page initialises; JavaScript injects the Session ID for the default language (English).
@@ -96,7 +98,39 @@ This code is subsequently cross-referenced against the internal `streamMap` obje
 
 To deploy this functionality, the static initialisation script within the HTML wrapper would be augmented with conditional logic.
 
-**[Placeholder: Insert JavaScript Code Block for Locale Detection Logic]**
+```javascript
+
+// 1. Define the default fallback (e.g., English)
+
+const defaultLang = 'en';
+
+
+
+// 2. Detect and normalize browser language (e.g., 'es-MX' becomes 'es')
+
+const userLocale = (navigator.language || navigator.userLanguage).split('-')[0].toLowerCase();
+
+
+
+// 3. Determine the startup ID
+
+// If the detected language exists in our map, use it. Otherwise, use default.
+
+const initialId = streamMap.hasOwnProperty(userLocale) 
+
+    ? streamMap[userLocale] 
+
+    : streamMap[defaultLang];
+
+
+
+// 4. Initialize Player
+
+document.getElementById('panopto-player-frame').src = 
+
+    `https://{site}/Panopto/Pages/Embed.aspx?id=${initialId}&autoplay=true`;
+
+```
 
 ---
 
