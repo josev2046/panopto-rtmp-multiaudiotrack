@@ -30,7 +30,7 @@ To ensure frame-accurate synchronisation and reduce hardware footprint, this top
 * **Fan-Out:** The encoder processes the video signal once but generates unique RTMP streams for each language by mapping specific audio pairs to distinct Output Groups.
 * **Synchronisation:** As all RTMP streams derive from a single system clock, the timecode is identical across all sessions. This minimises visual discontinuity when a user switches languages.
 
-### Topology C: Cloud-Native Automation (AWS Media Services & SyncWords; adapted from [this](https://aws.amazon.com/blogs/media/translate-live-sports-automatically-to-reach-international-fans-with-aws-media-services-and-syncwords/))
+### Topology C: Cloud-Native Automation (AWS Media Services & SyncWords; as inspired by [this](https://aws.amazon.com/blogs/media/translate-live-sports-automatically-to-reach-international-fans-with-aws-media-services-and-syncwords/)) 
 This topology addresses requirements for high-volume automated translation without the logistical complexity of human interpreters. It leverages AWS Media Services for video processing and SyncWords for AI-driven dubbing and captioning.
 
 <img width="620" height="1090" alt="image" src="https://github.com/user-attachments/assets/187befe2-006e-4479-ad64-e58b69bfef8b" />
