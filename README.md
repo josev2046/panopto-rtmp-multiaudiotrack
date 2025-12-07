@@ -1,4 +1,4 @@
-# Multi-Language live streaming in Panopto
+# Multi-language live streaming in Panopto
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17788084.svg)](https://doi.org/10.5281/zenodo.17788084)
 
@@ -10,7 +10,7 @@ As Panopto’s native architecture currently supports a single audio track per v
 
 This prototype bridges standard Panopto delivery with multi-track requirements via a lightweight web wrapper. Three distinct upstream topologies have been modelled for this implementation: separate hardware encoders, an enterprise "fan-out" using AWS Elemental Live, and a cloud-native automated approach utilising AI translation.
 
-### Topology A: Discrete Hardware Encoders (Standard Implementation)
+### Topology A: discrete hardware encoders (standard implementation)
 In this configuration, separate physical encoding units are provisioned for each language. This is often utilised when legacy hardware is available or when language feeds originate from disparate physical locations.
 
 <img width="627" height="824" alt="Topology A Schematic" src="https://github.com/user-attachments/assets/8c769fdb-9675-4c5e-beb7-f2d293c537dd" />
@@ -19,7 +19,7 @@ In this configuration, separate physical encoding units are provisioned for each
 * **Routing:** Each encoder pushes to a unique Panopto Session GUID.
 * **Synchronisation:** Alignment relies on the manual synchronisation of "Start" times. Minor latency variances (drift) are expected between languages.
 
-### Topology B: AWS Elemental Live "Fan-Out" (Enterprise Implementation)
+### Topology B: AWS Elemental Live "Fan-Out" (enterprise implementation)
 To ensure frame-accurate synchronisation and reduce hardware footprint, this topology utilises a single unified encoding appliance.
 
 <img width="620" height="881" alt="Topology B Schematic" src="https://github.com/user-attachments/assets/380d6001-90e6-401f-928b-b8efb60884d5" />
@@ -28,7 +28,7 @@ To ensure frame-accurate synchronisation and reduce hardware footprint, this top
 * **Fan-Out:** The encoder processes the video signal once but generates unique RTMP streams for each language by mapping specific audio pairs to distinct Output Groups.
 * **Synchronisation:** As all RTMP streams derive from a single system clock, the timecode is identical across all sessions. This minimises visual discontinuity when a user switches languages.
 
-### Topology C: Cloud-Native Automation (AI-Driven Localisation)
+### Topology C: cloud-native automation (AI-driven localisation)
 This topology addresses requirements for high-volume automated translation without the logistical complexity of human interpreters. It leverages cloud-based video processing and an AI-driven middleware layer for dubbing and captioning (an approach comparable to [this reference architecture](https://aws.amazon.com/blogs/media/translate-live-sports-automatically-to-reach-international-fans-with-aws-media-services-and-syncwords/)).
 
 <img width="620" height="1090" alt="Topology C Schematic" src="https://github.com/user-attachments/assets/187befe2-006e-4479-ad64-e58b69bfef8b" />
